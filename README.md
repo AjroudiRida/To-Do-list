@@ -34,7 +34,7 @@
 
 <!-- PROJECT DESCRIPTION -->
 
-# 📖 Awesome Books <a name="about-project"></a>
+# 📖 To DO List <a name="about-project"></a>
 
 **To DO List** is a project that's allow to manage and store tasks using the power of javascript and webpack.
 
