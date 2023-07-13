@@ -5,38 +5,45 @@
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _style_css__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(1);
+/* harmony import */ var _crud_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(11);
 
 
-const taskList = [{
-  description: 'wash the dishes',
-  completed: false,
-  index: 2,
-},
-{
-  description: 'complete to Do list project',
-  completed: false,
-  index: 1,
-},
-{
-  description: 'create a web site',
-  completed: false,
-  index: 4,
-},
-];
+
+const taskList = [];
 
 const { localStorage } = window;
-localStorage.setItem('taskList', JSON.stringify(taskList));
+
+const taskContainer = document.querySelector('.task-container');
 
 // display
 const display = () => {
   const data = JSON.parse(localStorage.getItem('taskList'));
-  const taskContainer = document.querySelector('.task-container');
+  const arr = [];
+  const newData = [];
   data.forEach((task) => {
+    arr.push(task.index);
+  });
+
+  arr.sort((a, b) => a - b);
+
+  for (let i = 0; i < arr.length; i += 1) {
+    data.forEach((task) => {
+      if (arr[i] === task.index) {
+        task.index = i;
+        newData.push(task);
+      }
+    });
+  }
+  localStorage.setItem('taskList', JSON.stringify(newData));
+  taskContainer.innerHTML = '';
+  newData.forEach((task) => {
     const elem = `
     
       <div class="left">
-      <input type="checkbox" id="task-${task.index}" name="task" value="${task.description}">
-      <label for="task-${task.index}"> ${task.description}</label>
+        <input type="checkbox" id="task-${task.index}" name="task" value="${task.description}">
+        <div class="content" contentEditable="true">
+           ${task.description}
+        </div>
       </div>
       <span class="material-symbols-sharp">
         more_vert
@@ -46,30 +53,114 @@ const display = () => {
 
     const currentTask = document.createElement('div');
     currentTask.setAttribute('class', 'task');
+    currentTask.setAttribute('data-index', task.index);
     currentTask.innerHTML = elem;
     taskContainer.appendChild(currentTask);
   });
 };
 
-window.addEventListener('load', () => {
-  const data = JSON.parse(localStorage.getItem('taskList'));
-  const arr = [];
-  const newData = [];
-  taskList.forEach((task) => {
-    arr.push(task.index);
-  });
+const AllEventHandler = () => {
+  const allTasks = taskContainer.querySelectorAll('.task');
 
-  arr.sort((a, b) => a - b);
-  for (let i = 0; i < arr.length; i += 1) {
-    data.forEach((task) => {
-      if (arr[i] === task.index) {
-        newData.push(task);
-      }
+  if (allTasks.length !== 0) {
+    allTasks.forEach((tsk) => {
+      const content = tsk.querySelector('.content');
+
+      content.addEventListener('click', () => {
+        allTasks.forEach((tsks) => {
+          tsks.style.backgroundColor = '#fff';
+          tsks.getElementsByTagName('span')[0].textContent = 'more_vert';
+        });
+
+        document.addEventListener('click', (event) => {
+          const isClickInsideDiv = taskContainer.contains(event.target);
+          if (!isClickInsideDiv) {
+            tsk.style.backgroundColor = '#fff';
+            tsk.getElementsByTagName('span')[0].textContent = 'more_vert';
+          }
+        });
+        tsk.style.backgroundColor = '#E3E2AE';
+        tsk.getElementsByTagName('span')[0].textContent = 'delete';
+      });
+      content.addEventListener('focus', () => {
+        content.style.outline = 'none';
+      });
     });
   }
-  localStorage.setItem('taskList', JSON.stringify(newData));
-  display();
+};
+
+// display tasks when page load
+window.addEventListener('load', () => {
+  const data = JSON.parse(localStorage.getItem('taskList'));
+  if (data) {
+    display();
+    AllEventHandler();
+  }
 });
+
+// add new task
+const addBtn = document.querySelector('.add-task span');
+const taskInput = document.querySelector('#addTask');
+
+const eventHandler = (e) => {
+  if (e.key === 'Enter' || e.type === 'click') {
+    (0,_crud_js__WEBPACK_IMPORTED_MODULE_1__.addTask)(taskList, localStorage);
+    display();
+    AllEventHandler();
+  }
+};
+
+addBtn.addEventListener('click', eventHandler);
+taskInput.addEventListener('keydown', eventHandler);
+
+// remove
+const removeObserver = new MutationObserver((mutationsList) => {
+  mutationsList.forEach((mutation) => {
+    const data = JSON.parse(localStorage.getItem('taskList'));
+    if (mutation !== null) {
+      const btn = mutation.target;
+
+      if (btn.textContent === 'delete') {
+        btn.addEventListener('click', () => {
+          (0,_crud_js__WEBPACK_IMPORTED_MODULE_1__.remove)(data, localStorage, btn);
+          display();
+          AllEventHandler();
+        });
+      }
+    }
+  });
+});
+
+removeObserver.observe(taskContainer, { childList: true, subtree: true });
+
+// edit
+
+const editObserve = new MutationObserver(() => {
+  const tasks = taskContainer.querySelectorAll('.task');
+  tasks.forEach((task) => {
+    const data = JSON.parse(localStorage.getItem('taskList'));
+
+    const content = task.querySelector('.left .content');
+
+    content.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        data.forEach((tsk) => {
+          if (parseInt(tsk.index, 10) === parseInt(task.getAttribute('data-index'), 10)) {
+            tsk.description = content.textContent;
+          }
+        });
+
+        localStorage.setItem('taskList', JSON.stringify(data));
+        display();
+        AllEventHandler();
+      }
+    });
+  });
+});
+
+editObserve.observe(taskContainer, { childList: true });
+
 
 /***/ }),
 /* 1 */
@@ -468,6 +559,30 @@ input[type="checkbox"] {
   color: rgb(147, 144, 144);
   margin: 0;
 }
+
+.add-task span {
+  cursor: pointer;
+}
+
+.task span {
+  cursor: pointer;
+}
+
+.task-container .task .left {
+  display: flex;
+  font-size: 1.5rem;
+  align-items: flex-start;
+  column-gap: 1rem;
+  flex-basis: 95%;
+}
+
+.task-container .task .left .content {
+  flex-basis: 95%;
+}
+
+.task-container .task .left .content p {
+  margin: 0;
+}
 `, ""]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
@@ -572,6 +687,44 @@ module.exports = function (cssWithMappingToString) {
   };
   return list;
 };
+
+/***/ }),
+/* 11 */
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   addTask: () => (/* binding */ addTask),
+/* harmony export */   remove: () => (/* binding */ remove)
+/* harmony export */ });
+const addTask = (taskList, localStorage) => {
+  let data = [];
+  if (localStorage.getItem('taskList')) {
+    data = JSON.parse(localStorage.getItem('taskList'));
+  } else {
+    localStorage.setItem('taskList', JSON.stringify(taskList));
+    data = JSON.parse(localStorage.getItem('taskList'));
+  }
+  const description = document.querySelector('#addTask').value;
+  const newIndex = data.length === 0 ? 0 : data.length;
+
+  const task = {
+    description,
+    completed: false,
+    index: newIndex,
+  };
+
+  data.push(task);
+  localStorage.setItem('taskList', JSON.stringify(data));
+  document.querySelector('#addTask').value = '';
+};
+
+const remove = (data, localStorage, btn) => {
+  const newArr = data.filter((item) => item.index !== parseInt(btn.parentNode.getAttribute('data-index'), 10));
+  localStorage.setItem('taskList', JSON.stringify(newArr));
+};
+
+
 
 /***/ })
 ],
