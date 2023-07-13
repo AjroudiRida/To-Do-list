@@ -142,7 +142,6 @@ const editObserve = new MutationObserver(() => {
 
     const content = task.querySelector('.left .content');
     const label = content.querySelector('label');
-    // console.log(content);
 
     content.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
@@ -151,6 +150,7 @@ const editObserve = new MutationObserver(() => {
         data.forEach((tsk) => {
           if (parseInt(tsk.index, 10) === parseInt(task.getAttribute('data-index'), 10)) {
             tsk.description = label.textContent;
+            console.log(label);
           }
         });
 
