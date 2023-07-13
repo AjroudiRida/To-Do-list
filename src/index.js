@@ -142,7 +142,6 @@ const editObserve = new MutationObserver(() => {
         data.forEach((tsk) => {
           if (parseInt(tsk.index, 10) === parseInt(task.getAttribute('data-index'), 10)) {
             tsk.description = label.nodeValue;
-            
           }
         });
 
