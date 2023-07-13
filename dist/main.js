@@ -42,7 +42,7 @@ const display = () => {
       <div class="left">
         <input type="checkbox" id="task-${task.index}" name="task" value="${task.description}">
         <div class="content" contentEditable="true">
-          <label for="task-${task.index}"> ${task.description}</label>
+           ${task.description}
         </div>
       </div>
       <span class="material-symbols-sharp">
@@ -141,16 +141,13 @@ const editObserve = new MutationObserver(() => {
     const data = JSON.parse(localStorage.getItem('taskList'));
 
     const content = task.querySelector('.left .content');
-    const label = content.querySelector('label');
 
     content.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         e.preventDefault();
-
         data.forEach((tsk) => {
           if (parseInt(tsk.index, 10) === parseInt(task.getAttribute('data-index'), 10)) {
-            tsk.description = label.textContent;
-            console.log(label);
+            tsk.description = content.textContent;
           }
         });
 
@@ -581,6 +578,10 @@ input[type="checkbox"] {
 
 .task-container .task .left .content {
   flex-basis: 95%;
+}
+
+.task-container .task .left .content p {
+  margin: 0;
 }
 `, ""]);
 // Exports

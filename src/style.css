@@ -106,3 +106,7 @@ input[type="checkbox"] {
 .task-container .task .left .content {
   flex-basis: 95%;
 }
+
+.task-container .task .left .content p {
+  margin: 0;
+}
