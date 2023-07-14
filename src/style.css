@@ -49,6 +49,26 @@ body {
   color: lightgrey;
 }
 
+.checkbox-container {
+  display: flex;
+  position: relative;
+  padding-left: 2rem;
+  cursor: pointer;
+  font-size: 22px;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.checkbox-container input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+
 .add-task input:focus {
   outline: none;
 }
@@ -107,6 +127,50 @@ input[type="checkbox"] {
   flex-basis: 95%;
 }
 
+.clear p:hover {
+  color: #000;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
 .task-container .task .left .content p {
   margin: 0;
+}
+
+.checkmark {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 14px;
+  width: 14px;
+  background-color: #fff;
+  border: 1px solid lightgrey;
+  border-radius: 2px;
+}
+
+.checkbox-container input:checked ~ .checkmark {
+  background-color: white;
+  border: none;
+}
+
+.checkmark::after {
+  content: "";
+  position: absolute;
+  display: none;
+}
+
+.checkbox-container .checkmark::after {
+  left: 4px;
+  top: 2px;
+  width: 4px;
+  height: 8px;
+  border: solid #2196f3;
+  border-width: 0 2px 2px 0;
+  -webkit-transform: rotate(45deg);
+  -ms-transform: rotate(45deg);
+  transform: rotate(45deg);
+}
+
+.checkbox-container input:checked ~ .checkmark::after {
+  display: block;
 }

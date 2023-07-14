@@ -1,5 +1,6 @@
 import './style.css';
 import { addTask, remove } from './crud.js';
+import { clearAll, statusUpdate } from '../module/statusUpdate.js';
 
 const taskList = [];
 
@@ -32,7 +33,10 @@ const display = () => {
     const elem = `
     
       <div class="left">
-        <input type="checkbox" id="task-${task.index}" name="task" value="${task.description}">
+        <label class="checkbox-container">
+          <input class="checkbox" type="checkbox" id="task-${task.index}" name="task" value="${task.description}">
+          <span class="checkmark"></span>
+        </label>
         <div class="content" contentEditable="true">
            ${task.description}
         </div>
@@ -47,6 +51,13 @@ const display = () => {
     currentTask.setAttribute('class', 'task');
     currentTask.setAttribute('data-index', task.index);
     currentTask.innerHTML = elem;
+    if (task.completed) {
+      const check = currentTask.querySelector('.left .checkbox-container .checkbox');
+      const content = currentTask.querySelector('.left .content');
+      content.style.textDecoration = 'line-through';
+
+      check.click();
+    }
     taskContainer.appendChild(currentTask);
   });
 };
@@ -61,18 +72,18 @@ const AllEventHandler = () => {
       content.addEventListener('click', () => {
         allTasks.forEach((tsks) => {
           tsks.style.backgroundColor = '#fff';
-          tsks.getElementsByTagName('span')[0].textContent = 'more_vert';
+          tsks.getElementsByClassName('material-symbols-sharp')[0].textContent = 'more_vert';
         });
 
         document.addEventListener('click', (event) => {
           const isClickInsideDiv = taskContainer.contains(event.target);
           if (!isClickInsideDiv) {
             tsk.style.backgroundColor = '#fff';
-            tsk.getElementsByTagName('span')[0].textContent = 'more_vert';
+            tsk.getElementsByClassName('material-symbols-sharp')[0].textContent = 'more_vert';
           }
         });
         tsk.style.backgroundColor = '#E3E2AE';
-        tsk.getElementsByTagName('span')[0].textContent = 'delete';
+        tsk.getElementsByClassName('material-symbols-sharp')[0].textContent = 'delete';
       });
       content.addEventListener('focus', () => {
         content.style.outline = 'none';
@@ -152,3 +163,20 @@ const editObserve = new MutationObserver(() => {
 });
 
 editObserve.observe(taskContainer, { childList: true });
+
+// Update items object's value for completed key upon user actions
+const completedObserver = new MutationObserver(() => {
+  statusUpdate(taskContainer);
+});
+
+completedObserver.observe(taskContainer, { childList: true, subtree: true });
+
+// clear All function
+
+const clearBtn = document.querySelector('.clear p');
+clearBtn.addEventListener('click', () => {
+  //
+  clearAll(taskContainer);
+  display();
+  AllEventHandler();
+});
