@@ -6,6 +6,8 @@
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _style_css__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(1);
 /* harmony import */ var _crud_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(11);
+/* harmony import */ var _module_statusUpdate_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(12);
+
 
 
 
@@ -40,7 +42,10 @@ const display = () => {
     const elem = `
     
       <div class="left">
-        <input type="checkbox" id="task-${task.index}" name="task" value="${task.description}">
+        <label class="checkbox-container">
+          <input class="checkbox" type="checkbox" id="task-${task.index}" name="task" value="${task.description}">
+          <span class="checkmark"></span>
+        </label>
         <div class="content" contentEditable="true">
            ${task.description}
         </div>
@@ -55,6 +60,13 @@ const display = () => {
     currentTask.setAttribute('class', 'task');
     currentTask.setAttribute('data-index', task.index);
     currentTask.innerHTML = elem;
+    if (task.completed) {
+      const check = currentTask.querySelector('.left .checkbox-container .checkbox');
+      const content = currentTask.querySelector('.left .content');
+      content.style.textDecoration = 'line-through';
+
+      check.click();
+    }
     taskContainer.appendChild(currentTask);
   });
 };
@@ -69,18 +81,18 @@ const AllEventHandler = () => {
       content.addEventListener('click', () => {
         allTasks.forEach((tsks) => {
           tsks.style.backgroundColor = '#fff';
-          tsks.getElementsByTagName('span')[0].textContent = 'more_vert';
+          tsks.getElementsByClassName('material-symbols-sharp')[0].textContent = 'more_vert';
         });
 
         document.addEventListener('click', (event) => {
           const isClickInsideDiv = taskContainer.contains(event.target);
           if (!isClickInsideDiv) {
             tsk.style.backgroundColor = '#fff';
-            tsk.getElementsByTagName('span')[0].textContent = 'more_vert';
+            tsk.getElementsByClassName('material-symbols-sharp')[0].textContent = 'more_vert';
           }
         });
         tsk.style.backgroundColor = '#E3E2AE';
-        tsk.getElementsByTagName('span')[0].textContent = 'delete';
+        tsk.getElementsByClassName('material-symbols-sharp')[0].textContent = 'delete';
       });
       content.addEventListener('focus', () => {
         content.style.outline = 'none';
@@ -160,6 +172,23 @@ const editObserve = new MutationObserver(() => {
 });
 
 editObserve.observe(taskContainer, { childList: true });
+
+// Update items object's value for completed key upon user actions
+const completedObserver = new MutationObserver(() => {
+  (0,_module_statusUpdate_js__WEBPACK_IMPORTED_MODULE_2__.statusUpdate)(taskContainer);
+});
+
+completedObserver.observe(taskContainer, { childList: true, subtree: true });
+
+// clear All function
+
+const clearBtn = document.querySelector('.clear p');
+clearBtn.addEventListener('click', () => {
+  //
+  (0,_module_statusUpdate_js__WEBPACK_IMPORTED_MODULE_2__.clearAll)(taskContainer);
+  display();
+  AllEventHandler();
+});
 
 
 /***/ }),
@@ -522,6 +551,26 @@ body {
   color: lightgrey;
 }
 
+.checkbox-container {
+  display: flex;
+  position: relative;
+  padding-left: 2rem;
+  cursor: pointer;
+  font-size: 22px;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.checkbox-container input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+
 .add-task input:focus {
   outline: none;
 }
@@ -580,8 +629,52 @@ input[type="checkbox"] {
   flex-basis: 95%;
 }
 
+.clear p:hover {
+  color: #000;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
 .task-container .task .left .content p {
   margin: 0;
+}
+
+.checkmark {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 14px;
+  width: 14px;
+  background-color: #fff;
+  border: 1px solid lightgrey;
+  border-radius: 2px;
+}
+
+.checkbox-container input:checked ~ .checkmark {
+  background-color: white;
+  border: none;
+}
+
+.checkmark::after {
+  content: "";
+  position: absolute;
+  display: none;
+}
+
+.checkbox-container .checkmark::after {
+  left: 4px;
+  top: 2px;
+  width: 4px;
+  height: 8px;
+  border: solid #2196f3;
+  border-width: 0 2px 2px 0;
+  -webkit-transform: rotate(45deg);
+  -ms-transform: rotate(45deg);
+  transform: rotate(45deg);
+}
+
+.checkbox-container input:checked ~ .checkmark::after {
+  display: block;
 }
 `, ""]);
 // Exports
@@ -722,6 +815,60 @@ const addTask = (taskList, localStorage) => {
 const remove = (data, localStorage, btn) => {
   const newArr = data.filter((item) => item.index !== parseInt(btn.parentNode.getAttribute('data-index'), 10));
   localStorage.setItem('taskList', JSON.stringify(newArr));
+};
+
+
+
+/***/ }),
+/* 12 */
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   clearAll: () => (/* binding */ clearAll),
+/* harmony export */   statusUpdate: () => (/* binding */ statusUpdate)
+/* harmony export */ });
+const statusUpdate = (taskContainer) => {
+  const tasks = taskContainer.querySelectorAll('.task');
+  const data = JSON.parse(localStorage.getItem('taskList'));
+  tasks.forEach((task) => {
+    const check = task.querySelector('.left .checkbox');
+    const content = task.querySelector('.left .content');
+    check.addEventListener('change', (e) => {
+      if (e.target.checked) {
+        content.style.textDecoration = 'line-through';
+        data.forEach((tsk) => {
+          if (parseInt(tsk.index, 10) === parseInt(task.getAttribute('data-index'), 10)) {
+            tsk.completed = true;
+            localStorage.setItem('taskList', JSON.stringify(data));
+          }
+        });
+      } else {
+        content.style.textDecoration = 'none';
+        check.style.display = 'inline-block';
+        data.forEach((tsk) => {
+          if (parseInt(tsk.index, 10) === parseInt(task.getAttribute('data-index'), 10)) {
+            tsk.completed = false;
+            localStorage.setItem('taskList', JSON.stringify(data));
+          }
+        });
+      }
+    });
+  });
+};
+
+const clearAll = (taskContainer) => {
+  const tasks = taskContainer.querySelectorAll('.task');
+  let data = JSON.parse(localStorage.getItem('taskList'));
+
+  tasks.forEach((task) => {
+    const check = task.querySelector('.left .checkbox');
+    if (check.checked) {
+      const newArr = data.filter((item) => item.index !== parseInt(task.getAttribute('data-index'), 10));
+      data = newArr;
+      localStorage.setItem('taskList', JSON.stringify(newArr));
+    }
+  });
 };
 
 
